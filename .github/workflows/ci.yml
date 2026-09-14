@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      # Build-time placeholders; nothing here talks to a real service.
+      DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/kin
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_a2luLWV4YW1wbGUuY2xlcmsuYWNjb3VudHMuZGV2JA
+      CLERK_SECRET_KEY: sk_test_placeholder000000000000000000000000000
+      CRON_SECRET: ci
+      SERWIST_SUPPRESS_TURBOPACK_WARNING: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test:coverage
+      - run: pnpm build

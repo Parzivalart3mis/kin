@@ -7,5 +7,11 @@ export default defineConfig({
   test: {
     include: ["tests/**/*.test.ts"],
     environment: "node",
+    coverage: {
+      provider: "v8",
+      include: ["src/lib/**", "src/app/api/**"],
+      exclude: ["src/lib/client/**", "src/lib/push.ts", "src/lib/ratelimit.ts", "src/lib/logger.ts"],
+      reporter: ["text", "html"],
+    },
   },
 });
