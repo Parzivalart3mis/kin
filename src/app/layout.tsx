@@ -1,5 +1,6 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata, Viewport } from "next";
+import { ThemeProvider } from "@/components/app/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -54,15 +55,21 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      appearance={{
+        variables: { colorPrimary: "#4A5D7A", borderRadius: "0.75rem", fontFamily: "inherit" },
+      }}
+    >
       <html lang="en" className="h-full antialiased" suppressHydrationWarning>
         <head>
           {/* Next emits only `mobile-web-app-capable`; older iOS reads this one. */}
           <meta name="apple-mobile-web-app-capable" content="yes" />
         </head>
         <body className="min-h-full flex flex-col">
-          {children}
-          <Toaster position="top-center" offset={{ top: "max(env(safe-area-inset-top), 16px)" }} />
+          <ThemeProvider>
+            {children}
+            <Toaster position="top-center" offset={{ top: "max(env(safe-area-inset-top), 16px)" }} />
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>

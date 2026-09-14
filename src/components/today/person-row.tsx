@@ -2,7 +2,7 @@
 
 import { Check, Moon, Phone, PhoneMissed } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatForDisplay, telHref } from "@/lib/phone";
+import { telHref } from "@/lib/phone";
 import type { PersonWithStatusDto } from "@/lib/schemas";
 
 interface Props {
@@ -56,15 +56,13 @@ export function PersonRow({ person, busy, onDone, onAttempt }: Props) {
           >
             {person.name}
           </span>
-          <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            {person.isNight ? <Moon className="size-3" aria-hidden="true" /> : null}
-            <span>
-              {person.localTime}
-              {person.isNight ? " their time, probably asleep" : " their time"}
-            </span>
-            <span aria-hidden="true">·</span>
-            <span className="truncate">{formatForDisplay(person.phone)}</span>
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            {person.isNight ? <Moon className="size-3 shrink-0" aria-hidden="true" /> : null}
+            <span className="truncate">{person.localTime} their time</span>
           </span>
+          {person.isNight && !struck ? (
+            <span className="block text-xs text-muted-foreground">Probably asleep</span>
+          ) : null}
           {attempt ? (
             <span className="block text-xs text-muted-foreground">{attempt}</span>
           ) : null}
@@ -72,12 +70,12 @@ export function PersonRow({ person, busy, onDone, onAttempt }: Props) {
       </a>
 
       {!struck ? (
-        <div className="flex shrink-0 flex-col justify-center gap-1 pr-2 py-2">
+        <div className="flex w-[7.75rem] shrink-0 flex-col justify-center gap-1.5 py-2 pr-2">
           <button
             type="button"
             disabled={busy}
             onClick={() => onDone(person)}
-            className="flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground outline-none transition-colors hover:bg-primary/90 focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 select-none"
+            className="flex min-h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-2 text-sm font-medium text-primary-foreground outline-none transition-colors hover:bg-primary/90 focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 select-none"
             aria-label={`Mark ${person.name} as called`}
           >
             <Check className="size-4" aria-hidden="true" />
@@ -87,7 +85,7 @@ export function PersonRow({ person, busy, onDone, onAttempt }: Props) {
             type="button"
             disabled={busy}
             onClick={() => onAttempt(person)}
-            className="flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-lg border border-border px-3 text-sm text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 select-none"
+            className="flex min-h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-border px-2 text-sm text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 select-none"
             aria-label={`Log no answer from ${person.name}`}
           >
             <PhoneMissed className="size-4" aria-hidden="true" />

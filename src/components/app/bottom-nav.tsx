@@ -31,7 +31,14 @@ export function BottomNav() {
                   active ? "text-primary" : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                <Icon className="size-5" aria-hidden="true" />
+                <span
+                  className={cn(
+                    "flex h-7 w-14 items-center justify-center rounded-full transition-colors",
+                    active && "bg-primary/12",
+                  )}
+                >
+                  <Icon className="size-5" aria-hidden="true" />
+                </span>
                 {label}
               </Link>
             </li>

@@ -2,6 +2,7 @@ import { SignOutButton } from "@clerk/nextjs";
 import { AppHeader } from "@/components/app/app-header";
 import { PushToggle } from "@/components/settings/push-toggle";
 import { SettingsForm } from "@/components/settings/settings-form";
+import { ThemePicker } from "@/components/settings/theme-picker";
 import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +15,9 @@ export default function SettingsPage() {
         <SettingsForm />
         <div className="border-t border-border pt-6">
           <PushToggle />
+        </div>
+        <div className="border-t border-border pt-6">
+          <ThemePicker />
         </div>
         <div className="border-t border-border pt-6">
           <SignOutButton redirectUrl="/sign-in">
