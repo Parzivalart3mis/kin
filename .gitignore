@@ -71,3 +71,13 @@ venv/
 tmp/
 temp/
 .cache/
+
+# Next.js
+next-env.d.ts
+.pnp
+.pnp.*
+
+# Serwist generated service worker
+public/sw.js
+public/sw.js.map
+public/swe-worker-*.js
