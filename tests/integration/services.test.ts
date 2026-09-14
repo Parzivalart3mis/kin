@@ -152,3 +152,35 @@ describe("settings service", () => {
     expect(u2.timezone).toBe("Europe/London");
   });
 });
+
+describe("idempotent replay", () => {
+  it("a second POST with the same clientId logs nothing new", async () => {
+    const p = await createPerson(user.id, { name: "A", phone: "3125550142", countryCode: "US", timezone: "America/Chicago", frequencyCount: 1, frequencyPeriod: "week" }, T0);
+    const clientId = "11111111-1111-4111-8111-111111111111";
+    const first = await logCall(user, p.id, "completed", T0, clientId);
+    const second = await logCall(user, p.id, "completed", T0, clientId);
+    expect(second.log.id).toBe(first.log.id);
+    expect(second.person.nextDueAt.getTime()).toBe(T0.getTime() + 7 * DAY);
+    const today = await getTodayList(user, T0);
+    expect(today[0]?.struckToday).toBe(true);
+    const logs = await db.query.callLogs.findMany();
+    expect(logs).toHaveLength(1);
+  });
+
+  it("attempts with the same clientId are also deduped", async () => {
+    const p = await createPerson(user.id, { name: "A", phone: "3125550142", countryCode: "US", timezone: "America/Chicago", frequencyCount: 1, frequencyPeriod: "week" }, T0);
+    const clientId = "22222222-2222-4222-8222-222222222222";
+    await logCall(user, p.id, "attempt", T0, clientId);
+    await logCall(user, p.id, "attempt", T0, clientId);
+    const today = await getTodayList(user, T0);
+    expect(today[0]?.attemptsToday).toBe(1);
+  });
+
+  it("logs without a clientId are never deduped against each other", async () => {
+    const p = await createPerson(user.id, { name: "A", phone: "3125550142", countryCode: "US", timezone: "America/Chicago", frequencyCount: 1, frequencyPeriod: "week" }, T0);
+    await logCall(user, p.id, "attempt", T0);
+    await logCall(user, p.id, "attempt", T0);
+    const today = await getTodayList(user, T0);
+    expect(today[0]?.attemptsToday).toBe(2);
+  });
+});

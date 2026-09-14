@@ -7,7 +7,6 @@ const isPublicRoute = createRouteMatcher([
   "/manifest.webmanifest",
   "/sw.js",
   "/offline",
-  "/preview",
 ]);
 
 // API routes enforce auth themselves via `requireUser()` so an unauthenticated

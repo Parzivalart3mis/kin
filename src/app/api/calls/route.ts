@@ -10,7 +10,7 @@ export const POST = route(async (req) => {
   await enforceWriteLimit(user.id);
   const input = await parseBody(req, callSchema);
   const occurredAt = input.occurredAt ? new Date(input.occurredAt) : new Date();
-  const { log, person } = await logCall(user, input.personId, input.type, occurredAt);
+  const { log, person } = await logCall(user, input.personId, input.type, occurredAt, input.clientId ?? null);
   const dto: CallLogDto = {
     id: log.id,
     personId: log.personId,

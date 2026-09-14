@@ -2,17 +2,20 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Skeleton } from "@/components/ui/skeleton";
+import { OutboxSync } from "@/components/app/outbox-sync";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { api, ApiError } from "@/lib/client/api";
 import { submitCall } from "@/lib/client/calls";
+import { pending } from "@/lib/offline/outbox";
+import { applyPending } from "@/lib/offline/overlay";
 import type { PersonWithStatusDto } from "@/lib/schemas";
 import { PersonRow } from "./person-row";
 
 type State =
   | { kind: "loading" }
   | { kind: "error"; message: string }
-  | { kind: "ready"; people: PersonWithStatusDto[]; stale: boolean };
+  | { kind: "ready"; people: PersonWithStatusDto[] };
 
 function sortToday(list: PersonWithStatusDto[]): PersonWithStatusDto[] {
   return [...list].sort((a, b) => {
@@ -21,18 +24,25 @@ function sortToday(list: PersonWithStatusDto[]): PersonWithStatusDto[] {
   });
 }
 
+const QUEUED_MESSAGE = "Saved. It'll sync when you're back online";
+
 export function TodayList() {
   const [state, setState] = useState<State>({ kind: "loading" });
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const people = await api<PersonWithStatusDto[]>("/api/due-today");
-      setState({ kind: "ready", people: sortToday(people), stale: false });
+      // The service worker answers this from cache when offline. Anything
+      // still in the outbox is newer than that cache, so overlay it.
+      const [people, queue] = await Promise.all([
+        api<PersonWithStatusDto[]>("/api/due-today"),
+        pending().catch(() => []),
+      ]);
+      setState({ kind: "ready", people: sortToday(applyPending(people, queue)) });
     } catch (e) {
       const message =
         e instanceof ApiError && e.code === "NETWORK"
-          ? "You're offline and nothing is cached yet"
+          ? "You're offline and today's list isn't saved yet"
           : "Couldn't load your list, try again";
       setState((prev) => (prev.kind === "ready" ? prev : { kind: "error", message }));
     }
@@ -56,16 +66,20 @@ export function TodayList() {
       const occurredAt = new Date().toISOString();
       apply((p) => ({ ...p, struckToday: true }), person.id);
       try {
-        const res = await submitCall({ personId: person.id, type: "completed", occurredAt });
-        apply(
-          (p) => ({
-            ...p,
-            struckToday: true,
-            lastConversationAt: res.person.lastConversationAt,
-            nextDueAt: res.person.nextDueAt,
-          }),
-          person.id,
-        );
+        const outcome = await submitCall({ personId: person.id, type: "completed", occurredAt });
+        if (outcome.queued) {
+          toast.message(QUEUED_MESSAGE);
+        } else {
+          apply(
+            (p) => ({
+              ...p,
+              struckToday: true,
+              lastConversationAt: outcome.result.person.lastConversationAt,
+              nextDueAt: outcome.result.person.nextDueAt,
+            }),
+            person.id,
+          );
+        }
       } catch (e) {
         apply((p) => ({ ...p, struckToday: false }), person.id);
         toast.error(e instanceof ApiError ? e.message : "Couldn't save that, try again");
@@ -85,10 +99,15 @@ export function TodayList() {
         person.id,
       );
       try {
-        await submitCall({ personId: person.id, type: "attempt", occurredAt });
+        const outcome = await submitCall({ personId: person.id, type: "attempt", occurredAt });
+        if (outcome.queued) toast.message(QUEUED_MESSAGE);
       } catch (e) {
         apply(
-          (p) => ({ ...p, attemptsToday: Math.max(0, p.attemptsToday - 1), lastAttemptAt: person.lastAttemptAt }),
+          (p) => ({
+            ...p,
+            attemptsToday: Math.max(0, p.attemptsToday - 1),
+            lastAttemptAt: person.lastAttemptAt,
+          }),
           person.id,
         );
         toast.error(e instanceof ApiError ? e.message : "Couldn't save that, try again");
@@ -99,8 +118,10 @@ export function TodayList() {
     [apply],
   );
 
+  let body: React.ReactNode;
+
   if (state.kind === "loading") {
-    return (
+    body = (
       <ul className="space-y-2" aria-busy="true" aria-label="Loading today's list">
         {[0, 1, 2].map((i) => (
           <li key={i} className="flex items-center gap-3 rounded-xl border border-border p-4">
@@ -113,39 +134,49 @@ export function TodayList() {
         ))}
       </ul>
     );
-  }
-
-  if (state.kind === "error") {
-    return (
+  } else if (state.kind === "error") {
+    body = (
       <div className="rounded-xl border border-border p-6 text-center">
         <p className="text-sm text-muted-foreground">{state.message}</p>
-        <Button variant="outline" className="mt-4 min-h-11" onClick={() => { setState({ kind: "loading" }); void load(); }}>
+        <Button
+          variant="outline"
+          className="mt-4"
+          onClick={() => {
+            setState({ kind: "loading" });
+            void load();
+          }}
+        >
           Try again
         </Button>
       </div>
     );
-  }
-
-  if (state.people.length === 0) {
-    return (
+  } else if (state.people.length === 0) {
+    body = (
       <div className="rounded-xl border border-dashed border-border p-8 text-center">
         <p className="text-base font-medium">Nobody&rsquo;s due today</p>
         <p className="mt-1 text-sm text-muted-foreground">Come back tomorrow.</p>
       </div>
     );
+  } else {
+    body = (
+      <ul className="space-y-2">
+        {state.people.map((p) => (
+          <PersonRow
+            key={p.id}
+            person={p}
+            busy={busyId === p.id}
+            onDone={handleDone}
+            onAttempt={handleAttempt}
+          />
+        ))}
+      </ul>
+    );
   }
 
   return (
-    <ul className="space-y-2">
-      {state.people.map((p) => (
-        <PersonRow
-          key={p.id}
-          person={p}
-          busy={busyId === p.id}
-          onDone={handleDone}
-          onAttempt={handleAttempt}
-        />
-      ))}
-    </ul>
+    <>
+      <OutboxSync onSynced={load} />
+      {body}
+    </>
   );
 }

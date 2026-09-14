@@ -73,8 +73,13 @@ export const callLogs = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     type: callTypeEnum("type").notNull(),
     occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull().defaultNow(),
+    /** Idempotency key from the offline outbox; a replayed request is a no-op. */
+    clientId: text("client_id"),
   },
-  (t) => [index("call_logs_person_occurred_idx").on(t.personId, sql`${t.occurredAt} desc`)],
+  (t) => [
+    index("call_logs_person_occurred_idx").on(t.personId, sql`${t.occurredAt} desc`),
+    uniqueIndex("call_logs_client_id_idx").on(t.clientId).where(sql`${t.clientId} is not null`),
+  ],
 );
 
 export const pushSubscriptions = pgTable(

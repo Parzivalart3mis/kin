@@ -32,6 +32,8 @@ export const callSchema = z.object({
   type: z.enum(["completed", "attempt"]),
   /** Optional client timestamp so offline-queued calls keep their real time. */
   occurredAt: z.iso.datetime().optional(),
+  /** Idempotency key; the outbox sets one so a retried POST can't double-log. */
+  clientId: z.uuid().optional(),
 });
 export type CallInput = z.infer<typeof callSchema>;
 

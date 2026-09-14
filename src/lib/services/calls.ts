@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray } from "drizzle-orm";
+import { and, eq, gte, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { callLogs, people, type CallLog, type Person, type User } from "@/db/schema";
 import { buildTodayList, type PersonWithStatus } from "@/lib/due";
@@ -25,14 +25,26 @@ export async function logCall(
   personId: string,
   type: CallLog["type"],
   occurredAt = new Date(),
+  clientId: string | null = null,
 ): Promise<LoggedCall> {
   const person = await getPerson(user.id, personId);
 
+  // A replayed outbox entry hits the unique client_id index and inserts
+  // nothing; return the original log and the person as they stand now.
   const [inserted] = await db
     .insert(callLogs)
-    .values({ personId: person.id, userId: user.id, type, occurredAt })
+    .values({ personId: person.id, userId: user.id, type, occurredAt, clientId })
+    .onConflictDoNothing({ target: callLogs.clientId, where: sql`${callLogs.clientId} is not null` })
     .returning();
-  if (!inserted) throw new AppError("INTERNAL", "Insert returned no row");
+  if (!inserted) {
+    if (!clientId) throw new AppError("INTERNAL", "Insert returned no row");
+    const existing = await db.query.callLogs.findFirst({
+      where: and(eq(callLogs.clientId, clientId), eq(callLogs.userId, user.id)),
+    });
+    if (!existing) throw new AppError("INTERNAL", "Duplicate log not found");
+    log.info("call_replayed", { personId: person.id });
+    return { log: existing, person };
+  }
 
   if (type === "attempt") {
     log.info("call_attempt", { personId: person.id });
