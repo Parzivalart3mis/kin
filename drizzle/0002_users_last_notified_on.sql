@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "last_notified_on" text;

@@ -29,6 +29,8 @@ export const users = pgTable(
     timezone: text("timezone").notNull().default("UTC"),
     /** "HH:mm" in the user's own timezone. */
     notificationTime: text("notification_time").notNull().default("09:00"),
+    /** Local "YYYY-MM-DD" of the last daily push — guarantees at most one a day. */
+    lastNotifiedOn: text("last_notified_on"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex("users_clerk_id_idx").on(t.clerkId)],
