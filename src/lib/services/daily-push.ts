@@ -35,8 +35,9 @@ export interface DailyPushResult {
  * list and push once. Marks the day as done even when nobody is due, so a
  * quiet day stays quiet rather than nagging the next tick.
  *
- * Runs correctly at any cadence: every 15 minutes gives near-on-time delivery,
- * once a day (Vercel Hobby) delivers at the next tick after each user's time.
+ * Runs correctly at any cadence: every 15 minutes (the cron-job.org schedule)
+ * gives near-on-time delivery; a sparser schedule still delivers at the first
+ * tick after each user's time, never twice.
  */
 export async function runDailyPush(now = new Date()): Promise<DailyPushResult> {
   const result: DailyPushResult = { considered: 0, sent: 0, skippedEmpty: 0 };

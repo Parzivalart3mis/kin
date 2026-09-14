@@ -15,8 +15,9 @@ function timingSafeEqual(a: string, b: string): boolean {
 }
 
 /**
- * Vercel Cron calls this with `Authorization: Bearer <CRON_SECRET>` (a GET).
- * The spec lists POST; both are accepted so a manual trigger works too.
+ * Triggered by an external scheduler (cron-job.org) every 15 minutes with
+ * `Authorization: Bearer <CRON_SECRET>`. GET is what cron-job.org sends by
+ * default; POST is accepted too so a manual curl matches the spec.
  */
 async function handle(req: Request): Promise<NextResponse> {
   try {

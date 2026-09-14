@@ -95,7 +95,7 @@ tests/            unit/ + integration/ (PGlite harness applies real migrations)
 
 **Offline.** The SW serves `/api/due-today` stale-while-revalidate. Calls logged offline go to an IndexedDB outbox and are replayed on launch / `online` / app-visible with a `clientId` idempotency key (iOS Safari has no Background Sync API, so the app drives the flush). The cached list has the queued calls overlaid so it matches what you did.
 
-**Daily push.** `vercel.json` runs `/api/cron/send-daily` every 15 minutes. Each run pushes to users who are past their notification time (in their zone) and haven't been notified today; `users.last_notified_on` guarantees at most one a day. Quiet days send nothing. On the Vercel **Hobby** plan crons can only run once a day — change the schedule to e.g. `0 14 * * *` and pushes land at the first tick after each user's time.
+**Daily push.** An external scheduler ([cron-job.org](https://cron-job.org)) hits `/api/cron/send-daily` every 15 minutes. Each run pushes to users who are past their notification time (in their zone) and haven't been notified today; `users.last_notified_on` guarantees at most one a day. Quiet days send nothing. The route is cadence-agnostic, so a sparser schedule still works — pushes just land at the first tick after each user's time.
 
 **Auth.** Pages go through Clerk's middleware and redirect to `/sign-in`. API routes call `requireUser()` and answer `401 { error: { code, message } }`. The Clerk user is mirrored into `users` on first request; no webhook needed.
 
@@ -122,8 +122,13 @@ CI (`.github/workflows/ci.yml`) runs typecheck, lint, tests with coverage, and a
 3. Push to `main`. The build command is `pnpm build` (already `next build --webpack`).
 4. Apply migrations to the production Neon branch: `DATABASE_URL=… pnpm db:migrate`.
 5. In Clerk, add the Vercel domain to the allowed origins; in production switch to `pk_live_`/`sk_live_` keys.
-6. The cron in `vercel.json` is picked up automatically. Confirm it under *Settings → Cron Jobs*, and check the plan note above.
-7. Trigger a manual run to verify: `curl -X POST -H "Authorization: Bearer $CRON_SECRET" https://<domain>/api/cron/send-daily`.
+6. Set up the scheduler on [cron-job.org](https://cron-job.org):
+   - **URL:** `https://<domain>/api/cron/send-daily`
+   - **Schedule:** every 15 minutes
+   - **Request method:** GET
+   - **Headers** (under *Advanced*): `Authorization: Bearer <your CRON_SECRET>`
+   - Enable *Save responses* so a failing run is visible; a healthy run returns `{"sent":N,"considered":N,"skippedEmpty":N}`.
+7. Verify by hand before trusting the schedule: `curl -H "Authorization: Bearer $CRON_SECRET" https://<domain>/api/cron/send-daily` — expect `200` and the JSON above; a wrong secret returns `401`.
 
 ## PWA install checklist (real iPhone)
 
