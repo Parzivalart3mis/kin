@@ -11,7 +11,7 @@ export default async function NewPersonPage() {
   return (
     <>
       <AppHeader title="Add someone" />
-      <main className="mx-auto w-full max-w-lg flex-1 px-4 pt-4 pb-24">
+      <main className="mx-auto w-full max-w-lg flex-1 px-4 pt-4 page-main">
         <PersonForm countries={listCountries()} defaultCountry={guessCountry(user.timezone)} />
       </main>
     </>

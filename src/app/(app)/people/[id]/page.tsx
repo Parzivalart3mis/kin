@@ -27,7 +27,7 @@ export default async function EditPersonPage({ params }: PageProps<"/people/[id]
   return (
     <>
       <AppHeader title={person.name} />
-      <main className="mx-auto w-full max-w-lg flex-1 space-y-8 px-4 pt-4 pb-24">
+      <main className="mx-auto w-full max-w-lg flex-1 space-y-8 px-4 pt-4 page-main">
         <PersonForm countries={listCountries()} person={toPersonDto(person)} defaultCountry={person.countryCode} />
         <div className="border-t border-border pt-6">
           <DeletePersonButton id={person.id} name={person.name} />

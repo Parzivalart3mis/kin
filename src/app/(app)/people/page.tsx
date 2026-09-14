@@ -19,7 +19,7 @@ export default function PeoplePage() {
           </Button>
         }
       />
-      <main className="mx-auto w-full max-w-lg flex-1 px-4 pt-4 pb-24">
+      <main className="mx-auto w-full max-w-lg flex-1 px-4 pt-4 page-main">
         <PeopleList />
       </main>
     </>
