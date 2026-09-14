@@ -1,17 +1,18 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { useEffect, useId, useState } from "react";
+import { useId, useSyncExternalStore } from "react";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
+
+const subscribeNoop = () => () => {};
 
 export function ThemePicker() {
   const id = useId();
   const { theme, setTheme } = useTheme();
-  // next-themes only knows the real value after mount; render a stable
-  // placeholder first so the server and client markup agree.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  // next-themes only knows the real value after hydration; render a stable
+  // placeholder on the server so the markup agrees.
+  const mounted = useSyncExternalStore(subscribeNoop, () => true, () => false);
 
   return (
     <section className="space-y-2">

@@ -6,7 +6,7 @@ import { createTestUser, resetTestDb, setupTestDb } from "./harness";
 import type { PushSubscription } from "@/db/schema";
 import type { PushPayload } from "@/lib/push";
 
-const sendPush = vi.fn(async (_sub: PushSubscription, _payload: PushPayload) => true);
+const sendPush = vi.fn<(sub: PushSubscription, payload: PushPayload) => Promise<boolean>>(async () => true);
 vi.mock("@/lib/push", () => ({
   sendPush: (sub: PushSubscription, payload: PushPayload) => sendPush(sub, payload),
   pushConfigured: () => true,

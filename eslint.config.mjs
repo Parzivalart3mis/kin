@@ -26,6 +26,7 @@ const eslintConfig = defineConfig([
     "public/sw.js",
     "public/swe-worker-*.js",
     "drizzle/**",
+    "coverage/**",
   ]),
 ]);
 
