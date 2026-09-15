@@ -90,14 +90,14 @@ self.addEventListener("push", (event) => {
       icon: "/icons/icon-192.png",
       badge: "/icons/icon-192.png",
       tag: payload.tag ?? "kin-daily",
-      data: { url: payload.url ?? "/" },
+      data: { url: payload.url ?? "/today" },
     }),
   );
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const target = new URL((event.notification.data as { url?: string })?.url ?? "/", self.location.origin).href;
+  const target = new URL((event.notification.data as { url?: string })?.url ?? "/today", self.location.origin).href;
   event.waitUntil(
     (async () => {
       const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });

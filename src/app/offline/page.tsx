@@ -15,7 +15,7 @@ export default function OfflinePage() {
         </p>
       </div>
       <Button asChild variant="outline" className="min-h-11">
-        <Link href="/">Open today&rsquo;s list</Link>
+        <Link href="/today">Open today&rsquo;s list</Link>
       </Button>
     </main>
   );

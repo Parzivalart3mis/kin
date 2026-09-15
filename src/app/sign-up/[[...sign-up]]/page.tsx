@@ -7,7 +7,7 @@ export default function SignUpPage() {
         <h1 className="text-2xl font-semibold tracking-tight">Kin</h1>
         <p className="mt-1 text-sm text-muted-foreground">One daily list of who to call.</p>
       </div>
-      <SignUp />
+      <SignUp fallbackRedirectUrl="/today" />
     </main>
   );
 }

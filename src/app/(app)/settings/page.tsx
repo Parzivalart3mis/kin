@@ -20,7 +20,7 @@ export default function SettingsPage() {
           <ThemePicker />
         </div>
         <div className="border-t border-border pt-6">
-          <SignOutButton redirectUrl="/sign-in">
+          <SignOutButton redirectUrl="/">
             <Button variant="outline" className="min-h-11 w-full">
               Sign out
             </Button>

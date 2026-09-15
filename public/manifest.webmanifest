@@ -2,7 +2,7 @@
   "name": "Kin — Daily Calls",
   "short_name": "Kin",
   "description": "One daily list of who to call.",
-  "start_url": "/",
+  "start_url": "/today",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",

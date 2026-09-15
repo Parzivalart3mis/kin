@@ -79,7 +79,7 @@ export async function runDailyPush(now = new Date()): Promise<DailyPushResult> {
     const payload: PushPayload = {
       title: "Kin",
       body: composeBody(list.map((p) => p.name)),
-      url: "/",
+      url: "/today",
       tag: `kin-daily-${today}`,
     };
     const subs = await db.query.pushSubscriptions.findMany({

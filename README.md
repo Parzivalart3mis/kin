@@ -71,7 +71,7 @@ Re-running updates people in place.
 
 ```
 src/
-  app/            routes: (app)/{today,people,settings}, sign-in, offline, api/*
+  app/            page.tsx = public landing (signed-in → /today); (app)/{today,people,settings}; sign-in; offline; api/*
   components/     shadcn/ui primitives + app/today/people/settings components
   db/             Drizzle schema + lazy Neon client
   lib/
@@ -97,7 +97,7 @@ tests/            unit/ + integration/ (PGlite harness applies real migrations)
 
 **Daily push.** An external scheduler ([cron-job.org](https://cron-job.org)) hits `/api/cron/send-daily` every 15 minutes. Each run pushes to users who are past their notification time (in their zone) and haven't been notified today; `users.last_notified_on` guarantees at most one a day. Quiet days send nothing. The route is cadence-agnostic, so a sparser schedule still works — pushes just land at the first tick after each user's time.
 
-**Auth.** Pages go through Clerk's middleware and redirect to `/sign-in`. API routes call `requireUser()` and answer `401 { error: { code, message } }`. The Clerk user is mirrored into `users` on first request; no webhook needed.
+**Auth.** `/` is the public landing page. App pages go through Clerk's middleware and redirect to `/sign-in`; the manifest's `start_url` is `/today`, so the installed app opens on the list (a redirect can't be served from the offline cache, the page can). API routes call `requireUser()` and answer `401 { error: { code, message } }`. The Clerk user is mirrored into `users` on first request; no webhook needed.
 
 **Logging.** Only `lib/logger.ts` may call `console.*` (ESLint enforces it). Log lines carry IDs and event names, never names or numbers.
 
